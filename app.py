@@ -36,15 +36,59 @@ def create_store():
     return new_store, 201
 
 
+@app.delete("/api/items/<string:store_id>")
+def delete_store(store_id):
+    try:
+        del stores[store_id]
+        return {"message": "Store deleted."}
+    except KeyError:
+        abort(404, message="Store Not Found")
+
+
+@app.put("/api/stores/<string:store_id>")
+def update_store(store_id):
+    body = request.get_json()
+    if "name" not in body:
+        abort(400, message="Bad request. Ensure 'name' is included in the JSON payload.")
+    try:
+        store = stores[store_id]
+        store |= body
+        return store, 200
+    except KeyError:
+        abort(404, message="Store Not Found")
+
+
 @app.get("/api/items")
 def get_items():
     return {"items": list(items.values())}, 200
 
 
-@app.get("/api/stores/<string:item_id>")
+@app.get("/api/items/<string:item_id>")
 def get_item(item_id):
     try:
         return items[item_id], 200
+    except KeyError:
+        abort(404, message="Item Not Found")
+
+
+@app.delete("/api/items/<string:item_id>")
+def delete_item(item_id):
+    try:
+        del items[item_id]
+        return {"message": "Item deleted."}
+    except KeyError:
+        abort(404, message="Item Not Found")
+
+
+@app.put("/api/items/<string:item_id>")
+def update_item(item_id):
+    body = request.get_json()
+    if "price" not in body or "name" not in body:
+        abort(400, message="Bad request. Ensure 'price' and 'name' are included in the JSON payload.")
+    try:
+        item = items[item_id]
+        item |= body
+        return item, 200
     except KeyError:
         abort(404, message="Item Not Found")
 
