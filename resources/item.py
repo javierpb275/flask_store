@@ -1,17 +1,18 @@
 import uuid
-from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from db import stores, items
+from schemas import ItemSchema, ItemUpdateSchema
 
 blp = Blueprint("items", __name__, description="Operations on items")
 
 
 @blp.route("/api/items/<string:item_id>")
 class Item(MethodView):
+    @blp.response(200, ItemSchema)
     def get(self, item_id):
         try:
-            return items[item_id], 200
+            return items[item_id]
         except KeyError:
             abort(404, message="Item Not Found")
 
@@ -22,31 +23,26 @@ class Item(MethodView):
         except KeyError:
             abort(404, message="Item Not Found")
 
-    def put(self, item_id):
-        body = request.get_json()
-        if "price" not in body or "name" not in body:
-            abort(400, message="Bad request. Ensure 'price' and 'name' are included in the JSON payload.")
+    @blp.arguments(ItemUpdateSchema)
+    @blp.response(200, ItemSchema)
+    def put(self, body, item_id):
         try:
             item = items[item_id]
             item |= body
-            return item, 200
+            return item
         except KeyError:
             abort(404, message="Item Not Found")
 
 
 @blp.route("/api/items")
 class ItemList(MethodView):
+    @blp.response(200, ItemSchema(many=True))
     def get(self):
-        return {"items": list(items.values())}, 200
+        return items.values()
 
-    def post(self):
-        body = request.get_json()
-        if (
-                "price" not in body
-                or "store_id" not in body
-                or "name" not in body
-        ):
-            abort(400, message="Bad request. Ensure 'price', 'store_id', and 'name' are included in the JSON payload.")
+    @blp.arguments(ItemSchema)
+    @blp.response(201, ItemSchema)
+    def post(self, body):
         for item in items.values():
             if (
                     body["name"] == item["name"]
@@ -58,4 +54,4 @@ class ItemList(MethodView):
         item_id = uuid.uuid4().hex
         new_item = {**body, "id": item_id}
         items[item_id] = new_item
-        return new_item, 201
+        return new_item
