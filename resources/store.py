@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from db import db
 from models import StoreModel
 
-from schemas import StoreSchema
+from schemas import StoreSchema, StoreUpdateSchema
 
 blp = Blueprint("stores", __name__, description="Operations on stores")
 
@@ -15,36 +15,33 @@ blp = Blueprint("stores", __name__, description="Operations on stores")
 class Store(MethodView):
     @blp.response(200, StoreSchema)
     def get(self, store_id):
-        try:
-            return stores[store_id]
-        except KeyError:
-            abort(404, message="Store Not Found")
+        store = StoreModel.query.get_or_404(store_id)
+        return store
 
     def delete(self, store_id):
-        try:
-            del stores[store_id]
-            return {"message": "Store deleted."}
-        except KeyError:
-            abort(404, message="Store Not Found")
+        store = StoreModel.query.get_or_404(store_id)
+        db.session.delete(store)
+        db.session.commit()
+        return {"message": "Store deleted"}, 200
 
+    @blp.arguments(StoreUpdateSchema)
     @blp.response(200, StoreSchema)
-    def put(self, store_id):
-        body = request.get_json()
-        if "name" not in body:
-            abort(400, message="Bad request. Ensure 'name' is included in the JSON payload.")
-        try:
-            store = stores[store_id]
-            store |= body
-            return store
-        except KeyError:
-            abort(404, message="Store Not Found")
+    def put(self, body, store_id):
+        store = StoreModel.query.get(store_id)
+        if store:
+            store.name = body["name"]
+        else:
+            store = StoreModel(id=store_id, **body)
+        db.session.add(store)
+        db.session.commit()
+        return store
 
 
 @blp.route("/api/stores")
 class StoreList(MethodView):
     @blp.response(200, StoreSchema(many=True))
     def get(self):
-        return stores.values()
+        return StoreModel.query.all()
 
     @blp.arguments(StoreSchema)
     @blp.response(201, StoreSchema)
