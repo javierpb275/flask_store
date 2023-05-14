@@ -1,4 +1,3 @@
-from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -11,7 +10,7 @@ from schemas import StoreSchema, StoreUpdateSchema
 blp = Blueprint("stores", __name__, description="Operations on stores")
 
 
-@blp.route("/api/stores/<string:store_id>")
+@blp.route("/api/stores/<int:store_id>")
 class Store(MethodView):
     @blp.response(200, StoreSchema)
     def get(self, store_id):

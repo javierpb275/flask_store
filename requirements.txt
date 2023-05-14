@@ -5,3 +5,4 @@ marshmallow
 sqlalchemy
 flask-sqlalchemy
 flask-jwt-extended
+passlib
