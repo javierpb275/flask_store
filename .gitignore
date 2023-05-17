@@ -1,8 +1,7 @@
+.vscode
 /venv
 __pycache__/
-.idea/
 *.env
-*.flaskenv
 data.db
-/instance
-/migrations
+*.pyc
+.DS_Store
